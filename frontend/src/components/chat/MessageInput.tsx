@@ -2,10 +2,16 @@ import { Box, TextField, Button } from "@mui/material";
 import { useState } from "react";
 import { useChatStore } from "../../store/chat.store";
 import { chatService } from "../../services/chat.service";
+import { resolveConversationAgentType } from "../../utils/intentClassifier";
+
+const EMPTY_MESSAGES: never[] = [];
 
 export default function MessageInput() {
   const [text, setText] = useState("");
   const activeConversationId = useChatStore((s) => s.activeConversationId);
+  const activeMessages = useChatStore((s) =>
+    s.activeConversationId ? s.messages[s.activeConversationId] || EMPTY_MESSAGES : EMPTY_MESSAGES
+  );
   const addMessage = useChatStore((s) => s.addMessage);
   const updateMessage = useChatStore((s) => s.updateMessage);
   const setTyping = useChatStore((s) => s.setTyping);
@@ -45,10 +51,10 @@ export default function MessageInput() {
     setTyping(true);
 
     const agentMessageId = `agent-${Date.now().toString()}`;
-    const msgLower = text.toLowerCase();
-    let agentType: "support" | "order" | "billing" = "support";
-    if (msgLower.includes("order") || msgLower.includes("tracking")) agentType = "order";
-    if (msgLower.includes("payment") || msgLower.includes("refund")) agentType = "billing";
+    const existingConversationType = [...activeMessages]
+      .reverse()
+      .find((msg) => msg.role === "agent" && msg.agentType)?.agentType;
+    const agentType = resolveConversationAgentType(text, existingConversationType);
 
     addMessage(tempId, {
       id: agentMessageId,

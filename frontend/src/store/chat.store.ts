@@ -23,6 +23,14 @@ type ChatState = {
   setTyping: (v: boolean) => void;
 };
 
+const areConversationsEqual = (a: Conversation[], b: Conversation[]) => {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i].id !== b[i].id || a[i].title !== b[i].title) return false;
+  }
+  return true;
+};
+
 export const useChatStore = create<ChatState>((set) => ({
   conversations: [],
   activeConversationId: null,
@@ -30,26 +38,44 @@ export const useChatStore = create<ChatState>((set) => ({
   isTyping: false,
 
   setConversations: (c) =>
-    set((state) => ({
-      conversations: c,
-      activeConversationId:
+    set((state) => {
+      const nextActiveConversationId =
         state.activeConversationId &&
         c.some((conv) => conv.id === state.activeConversationId)
           ? state.activeConversationId
-          : c[0]?.id || null,
-    })),
+          : c[0]?.id || null;
+
+      if (
+        areConversationsEqual(state.conversations, c) &&
+        state.activeConversationId === nextActiveConversationId
+      ) {
+        return state;
+      }
+
+      return {
+        conversations: c,
+        activeConversationId: nextActiveConversationId,
+      };
+    }),
 
   setActiveConversation: (id) =>
-    set((state) => ({
-      activeConversationId: id,
-      // initialize empty messages if not exist
-      messages: id
-        ? {
-        ...state.messages,
-        [id]: state.messages[id] || [],
-          }
-        : state.messages,
-    })),
+    set((state) => {
+      const alreadyInitialized = id ? Boolean(state.messages[id]) : true;
+      if (state.activeConversationId === id && alreadyInitialized) {
+        return state;
+      }
+
+      return {
+        activeConversationId: id,
+        // initialize empty messages if not exist
+        messages: id
+          ? {
+              ...state.messages,
+              [id]: state.messages[id] || [],
+            }
+          : state.messages,
+      };
+    }),
 
   setMessages: (conversationId, msgs) =>
     set((state) => ({
@@ -119,5 +145,6 @@ export const useChatStore = create<ChatState>((set) => ({
       };
     }),
 
-  setTyping: (v) => set({ isTyping: v }),
+  setTyping: (v) =>
+    set((state) => (state.isTyping === v ? state : { isTyping: v })),
 }));

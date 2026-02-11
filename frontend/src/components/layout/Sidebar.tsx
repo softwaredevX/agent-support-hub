@@ -5,6 +5,11 @@ import { useEffect, useState } from "react";
 import { useChatStore } from "../../store/chat.store";
 import { chatService } from "../../services/chat.service";
 import { agentService } from "../../services/agent.service";
+import {
+  classifyIntent,
+  resolveConversationAgentType,
+  type ChatAgentType
+} from "../../utils/intentClassifier";
 
 export default function Sidebar() {
   const conversations = useChatStore((s) => s.conversations);
@@ -64,29 +69,45 @@ export default function Sidebar() {
             title: item.title ?? undefined
           }));
           const state = useChatStore.getState();
+          const hadActiveConversation = Boolean(state.activeConversationId);
           const tempConversations = state.conversations.filter((conv) =>
             conv.id.startsWith("temp-")
           );
           const merged = [...tempConversations, ...mapped];
           setConversations(merged);
-          if (mapped.length && !activeConversationId) {
+          if (mapped.length && !hadActiveConversation) {
             await loadConversation(mapped[0].id);
           }
         }
       } catch {
-        setHealth("down");
+        // Keep sidebar usable even if one of the initial fetches fails.
       }
     };
 
     load();
-  }, [setConversations, activeConversationId]);
+  }, []);
 
   const loadConversation = async (id: string) => {
     const data = await chatService.getConversationById(id);
+
+    let conversationAgentType: ChatAgentType | undefined;
+    for (const msg of data.messages ?? []) {
+      if (msg.role !== "user" || !msg.content) continue;
+
+      const intent = classifyIntent(msg.content);
+      if (intent === "order" || intent === "billing") {
+        conversationAgentType = intent;
+      } else if (!conversationAgentType) {
+        conversationAgentType = resolveConversationAgentType(msg.content);
+      }
+    }
+
     const mapped = (data.messages ?? []).map((msg: any, idx: number) => ({
       id: msg.id ?? `${msg.role}-${idx}`,
       role: msg.role === "assistant" ? "agent" : "user",
       content: msg.content,
+      agentType:
+        msg.role === "assistant" ? conversationAgentType ?? "support" : undefined,
       status: "complete",
     }));
     setMessages(id, mapped);

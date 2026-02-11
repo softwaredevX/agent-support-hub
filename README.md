@@ -178,3 +178,4 @@ Base URL: `http://localhost:8080`
 1. Start the backend (`npm run dev`) and confirm `GET /api/health`.
 2. Start the frontend (`npm run dev`).
 3. Chat in the UI; streaming responses appear in real time.
+# agent-support-hub
