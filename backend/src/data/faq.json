@@ -1,0 +1,27 @@
+[
+  {
+    "id": "faq-001",
+    "question": "How do I check my order status?",
+    "answer": "Provide your order ID or tracking ID and we will look it up for you."
+  },
+  {
+    "id": "faq-002",
+    "question": "How long does shipping take?",
+    "answer": "Standard shipping takes 3-5 business days."
+  },
+  {
+    "id": "faq-003",
+    "question": "How do I request a refund?",
+    "answer": "Share your invoice ID and we will check refund eligibility and status."
+  },
+  {
+    "id": "faq-004",
+    "question": "Can I change my delivery address?",
+    "answer": "If your order is not yet shipped, we can update the delivery address."
+  },
+  {
+    "id": "faq-005",
+    "question": "How do I cancel an order?",
+    "answer": "If the order is still processing, we can cancel it on your behalf."
+  }
+]
